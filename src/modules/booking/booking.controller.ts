@@ -1,7 +1,7 @@
 import { Response, NextFunction } from 'express';
 import * as BookingService from './booking.service';
-import { successResponse } from '../../utils/response';
 import { AuthRequest } from '../../middlewares/auth.middleware';
+import { successResponse } from '../../utils/resoponse';
 
 export const createBooking = async (
   req: AuthRequest,
