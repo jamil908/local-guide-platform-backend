@@ -3,7 +3,10 @@ import { BookingStatus } from '@prisma/client';
 
 export const createBooking = async (bookingData: any) => {
   return await prisma.booking.create({
-    data: bookingData,
+   data: {
+  ...bookingData,
+  bookingDate: new Date(bookingData.bookingDate).toISOString(),
+},
     include: {
       listing: true,
       tourist: {
