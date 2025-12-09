@@ -47,22 +47,41 @@ export const getListingById = async (
   }
 };
 
+
 export const updateListing = async (
   req: AuthRequest,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const listing = await ListingService.updateListingService(
+    // Check if user is guide or admin
+    const listing = await ListingService.getListingByIdService(req.params.id);
+    
+    if (!listing) {
+      return res.status(404).json({
+        success: false,
+        message: 'Listing not found',
+      });
+    }
+
+    // Check ownership (guides can only edit their own listings)
+    if (req.user.role === 'GUIDE' && listing.guideId !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: 'You can only edit your own listings',
+      });
+    }
+
+    const updatedListing = await ListingService.updateListingService(
       req.params.id,
       req.body
     );
-    res.json(successResponse(listing, 'Listing updated successfully'));
+    
+    res.json(successResponse(updatedListing, 'Listing updated successfully'));
   } catch (error: any) {
     next(error);
   }
 };
-
 export const deleteListing = async (
   req: AuthRequest,
   res: Response,
