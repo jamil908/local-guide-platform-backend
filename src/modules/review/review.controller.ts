@@ -36,7 +36,7 @@ export const createReview = async (
     }
 
     // Check if booking is completed
-    if (booking.status !== 'COMPLETED') {
+    if (booking.status !== 'CONFIRMED') {
       return res.status(400).json({
         success: false,
         message: 'You can only review completed bookings',
