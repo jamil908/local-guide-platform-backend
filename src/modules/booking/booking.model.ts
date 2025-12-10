@@ -65,6 +65,7 @@ export const getBookingsByTourist = async (touristId: string) => {
           },
         },
       },
+      review: true,  
     },
     orderBy: { createdAt: 'desc' },
   });
@@ -82,6 +83,7 @@ export const getBookingsByGuide = async (guideId: string) => {
           profilePic: true,
         },
       },
+      review: true,  
     },
     orderBy: { createdAt: 'desc' },
   });

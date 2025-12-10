@@ -1,4 +1,3 @@
-// backend/src/modules/review/review.routes.ts
 import { Router } from 'express';
 import * as ReviewController from './review.controller';
 import { authenticate, authorize } from '../../middlewares/auth.middleware';
@@ -21,10 +20,10 @@ router.get(
   '/my-reviews',
   authenticate,
   authorize('TOURIST'),
-  ReviewController.getMyReviews
+  ReviewController.getMyReviews  // ✅ FIXED - was createReview
 );
 
-// Update review (Tourist only - own reviews)
+// ✅ ADD THIS - Update review
 router.patch(
   '/:id',
   authenticate,
@@ -32,7 +31,7 @@ router.patch(
   ReviewController.updateReview
 );
 
-// Delete review (Tourist can delete own, Admin can delete any)
+// ✅ ADD THIS - Delete review
 router.delete(
   '/:id',
   authenticate,

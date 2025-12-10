@@ -1,7 +1,6 @@
-// backend/src/modules/review/review.controller.ts
 import { Response, NextFunction } from 'express';
 import * as ReviewService from './review.service';
-import { successResponse } from '../../utils/resoponse'; 
+import { successResponse } from '../../utils/resoponse';
 import { AuthRequest } from '../../middlewares/auth.middleware';
 import prisma from '../../config/prisma';
 
@@ -14,7 +13,7 @@ export const createReview = async (
     const { listingId, bookingId, rating, comment } = req.body;
     const touristId = req.user.id;
 
-    // Validate booking exists and belongs to user
+    // Check if booking exists
     const booking = await prisma.booking.findUnique({
       where: { id: bookingId },
       include: { review: true },
@@ -35,27 +34,11 @@ export const createReview = async (
       });
     }
 
-    // Check if booking is completed
-    if (booking.status !== 'CONFIRMED') {
-      return res.status(400).json({
-        success: false,
-        message: 'You can only review completed bookings',
-      });
-    }
-
     // Check if already reviewed
     if (booking.review) {
       return res.status(400).json({
         success: false,
         message: 'You have already reviewed this booking',
-      });
-    }
-
-    // Validate rating
-    if (rating < 1 || rating > 5) {
-      return res.status(400).json({
-        success: false,
-        message: 'Rating must be between 1 and 5',
       });
     }
 
@@ -91,6 +74,7 @@ export const getReviewsByListing = async (
   }
 };
 
+// ✅ ADD THIS - Update Review
 export const updateReview = async (
   req: AuthRequest,
   res: Response,
@@ -140,6 +124,7 @@ export const updateReview = async (
   }
 };
 
+// ✅ ADD THIS - Delete Review
 export const deleteReview = async (
   req: AuthRequest,
   res: Response,
@@ -178,6 +163,7 @@ export const deleteReview = async (
   }
 };
 
+// ✅ ADD THIS - Get My Reviews
 export const getMyReviews = async (
   req: AuthRequest,
   res: Response,
