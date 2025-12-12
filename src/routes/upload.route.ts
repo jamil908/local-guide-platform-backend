@@ -18,7 +18,7 @@ router.post("/", upload.single("file"), async (req, res) => {
             else reject(error);
           }
         );
-        stream.end(req.file.buffer);
+        stream.end(req.file!.buffer);
       });
 
     const result = await streamUpload();
