@@ -1,5 +1,5 @@
 // backend/src/app.ts
-import express, { Application } from 'express';
+import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import { errorHandler } from './middlewares/errorHandler';
 
@@ -14,7 +14,34 @@ import uploadRoutes from './modules/upload/upload.route';
 const app: Application = express();
 
 // Middleware
-app.use(cors());
+// Define a list of allowed origins
+const allowedOrigins = [
+    'http://localhost:3000', // Your Next.js frontend running locally
+    'https://local-guide-platform-frontend.vercel.app' // Your deployed frontend (if applicable)
+    // Add any other domains your frontend might use
+];
+
+const corsOptions = {
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        // and requests whose origin is in the allowed list.
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true, // Allow cookies to be sent (useful for authenticated sessions)
+    // IMPORTANT: Allow headers needed for complex requests (like Content-Type, Authorization)
+    allowedHeaders: 'Content-Type,Authorization' 
+};
+
+// --- CONFIGURATION CHANGES END ---
+
+// Middleware
+// 1. Use the configured CORS middleware
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -31,7 +58,9 @@ app.use('/api/upload', uploadRoutes); // ← NEW ROUTE ADDED
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', message: 'Server is running' });
 });
-
+app.get("/", (req: Request, res: Response) => {
+  res.send("Parcel Delivery API is running 🚀");
+});
 // Test upload endpoint
 app.get('/api/upload/test', (req, res) => {
   res.json({ 
