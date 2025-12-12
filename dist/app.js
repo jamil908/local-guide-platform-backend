@@ -16,32 +16,7 @@ const payment_routes_1 = __importDefault(require("./modules/payment/payment.rout
 const upload_route_1 = __importDefault(require("./modules/upload/upload.route"));
 const app = (0, express_1.default)();
 // Middleware
-// Define a list of allowed origins
-const allowedOrigins = [
-    'http://localhost:3000', // Your Next.js frontend running locally
-    'https://local-guide-platform-frontend.vercel.app' // Your deployed frontend (if applicable)
-    // Add any other domains your frontend might use
-];
-const corsOptions = {
-    origin: (origin, callback) => {
-        // Allow requests with no origin (like mobile apps or curl requests)
-        // and requests whose origin is in the allowed list.
-        if (!origin || allowedOrigins.includes(origin)) {
-            callback(null, true);
-        }
-        else {
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    credentials: true, // Allow cookies to be sent (useful for authenticated sessions)
-    // IMPORTANT: Allow headers needed for complex requests (like Content-Type, Authorization)
-    allowedHeaders: 'Content-Type,Authorization'
-};
-// --- CONFIGURATION CHANGES END ---
-// Middleware
-// 1. Use the configured CORS middleware
-app.use((0, cors_1.default)(corsOptions));
+app.use((0, cors_1.default)());
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
 // Routes
@@ -57,7 +32,7 @@ app.get('/health', (req, res) => {
     res.json({ status: 'OK', message: 'Server is running' });
 });
 app.get("/", (req, res) => {
-    res.send("Parcel Delivery API is running 🚀");
+    res.send("Local guide  API is running 🚀");
 });
 // Test upload endpoint
 app.get('/api/upload/test', (req, res) => {
