@@ -1,74 +1,49 @@
-🗺️ LocalGuide Platform - Backend API
-RESTful API for LocalGuide Platform built with Node.js, Express.js, and Prisma ORM.
-🔗 Live API
-Base URL: https://your-backend-api.railway.app/api
-API Documentation: Available at /health endpoint
-🛠️ Technology Stack
+# 🗺️ LocalGuide Platform - Backend API
 
-Runtime: Node.js v18+
-Framework: Express.js
-Database: PostgreSQL
-ORM: Prisma
-Authentication: JWT (JSON Web Tokens)
-File Upload: Cloudinary
-Payment: SSLCommerz
-Language: TypeScript
+RESTful API for the LocalGuide Platform built with Node.js, Express, Prisma, and PostgreSQL.
 
-📁 Project Structure
-backend/
-├── src/
-│   ├── config/
-│   │   ├── prisma.ts          # Prisma client configuration
-│   │   ├── cloudinary.ts      # Cloudinary setup
-│   │   └── multer.ts          # File upload configuration
-│   ├── modules/
-│   │   ├── user/              # User management
-│   │   │   ├── user.model.ts
-│   │   │   ├── user.service.ts
-│   │   │   ├── user.controller.ts
-│   │   │   └── user.routes.ts
-│   │   ├── listing/           # Tour listings
-│   │   ├── booking/           # Booking management
-│   │   ├── review/            # Review system
-│   │   ├── payment/           # Payment integration
-│   │   └── upload/            # File upload
-│   ├── middlewares/
-│   │   ├── auth.middleware.ts # JWT authentication
-│   │   └── errorHandler.ts   # Global error handler
-│   ├── utils/
-│   │   ├── jwt.ts             # JWT utilities
-│   │   ├── bcrypt.ts          # Password hashing
-│   │   └── response.ts        # Response formatter
-│   ├── app.ts                 # Express app setup
-│   └── server.ts              # Server entry point
-├── prisma/
-│   ├── schema.prisma          # Database schema
-│   └── migrations/            # Database migrations
-├── .env.example               # Environment variables template
-├── package.json
-└── README.md
-🚀 Getting Started
-Prerequisites
+## 🚀 Live API
+**Production:** https://your-backend.onrender.com
+**Health Check:** https://your-backend.onrender.com/health
 
-Node.js (v18 or higher)
-PostgreSQL (v14 or higher)
-npm or yarn
+## 🛠️ Tech Stack
+- **Runtime:** Node.js 18+
+- **Framework:** Express.js
+- **Database:** PostgreSQL (Prisma ORM)
+- **Authentication:** JWT
+- **File Upload:** Cloudinary
+- **Payment:** SSLCommerz
+- **Language:** TypeScript
 
-Installation
+## 📦 Installation
 
-Clone the repository
+### Prerequisites
+- Node.js 18 or higher
+- PostgreSQL database
+- Cloudinary account
+- SSLCommerz account (Sandbox for testing)
 
-bashgit clone https://github.com/yourusername/localguide-backend.git
+### Setup Steps
+
+1. **Clone the repository**
+```bash
+git clone https://github.com/yourusername/localguide-backend.git
 cd localguide-backend
+```
 
-Install dependencies
+2. **Install dependencies**
+```bash
+npm install
+```
 
-bashnpm install
+3. **Environment Configuration**
+```bash
+cp .env.example .env
+```
 
-Environment Setup
-
-Create a .env file in the root directory:
-env# Server Configuration
+Edit `.env` with your credentials:
+```env
+# Server
 PORT=5000
 NODE_ENV=development
 
@@ -76,15 +51,15 @@ NODE_ENV=development
 DATABASE_URL="postgresql://username:password@localhost:5432/localguide?schema=public"
 
 # JWT
-JWT_SECRET=your-super-secret-jwt-key-min-32-characters-long
+JWT_SECRET=your-super-secret-jwt-key-min-32-characters
 JWT_EXPIRES_IN=7d
 
-# Cloudinary (Image Upload)
+# Cloudinary
 CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
 
-# SSLCommerz (Payment Gateway)
+# SSLCommerz
 SSLCOMMERZ_STORE_ID=testbox
 SSLCOMMERZ_STORE_PASSWORD=qwerty
 SSLCOMMERZ_IS_LIVE=false
@@ -92,121 +67,228 @@ SSLCOMMERZ_IS_LIVE=false
 # URLs
 FRONTEND_URL=http://localhost:3000
 BACKEND_URL=http://localhost:5000
+```
 
-Database Setup
-
-Run Prisma migrations:
-bashnpx prisma migrate dev --name init
+4. **Database Setup**
+```bash
+# Generate Prisma Client
 npx prisma generate
 
-Seed Database (Optional)
+# Run migrations
+npx prisma migrate dev --name init
 
-Create admin and test accounts:
-bashnpx prisma db seed
+# (Optional) Seed database
+npx prisma db seed
+```
 
-Start Development Server
+5. **Start Development Server**
+```bash
+npm run dev
+```
 
-bashnpm run dev
-Server will start at http://localhost:5000
-📋 API Endpoints
-Authentication
-MethodEndpointDescriptionPOST/api/auth/registerRegister new userPOST/api/auth/loginLogin user
-Users
-MethodEndpointDescriptionAuthGET/api/users/:idGet user profile✅PATCH/api/users/:idUpdate profile✅GET/api/usersGet all users (Admin)✅ AdminDELETE/api/users/:idDelete user (Admin)✅ Admin
-Listings (Tours)
-MethodEndpointDescriptionAuthGET/api/listingsGet all listings❌GET/api/listings/:idGet listing details❌POST/api/listingsCreate listing✅ GuidePATCH/api/listings/:idUpdate listing✅ GuideDELETE/api/listings/:idDelete listing✅ Guide
-Bookings
-MethodEndpointDescriptionAuthPOST/api/bookingsCreate booking✅ TouristGET/api/bookings/my-bookingsGet my bookings✅PATCH/api/bookings/:idUpdate booking status✅ GuideGET/api/bookingsGet all bookings✅ Admin
-Reviews
-MethodEndpointDescriptionAuthPOST/api/reviewsCreate review✅ TouristGET/api/reviews/listing/:idGet listing reviews❌PATCH/api/reviews/:idUpdate review✅ TouristDELETE/api/reviews/:idDelete review✅ Tourist
-File Upload
-MethodEndpointDescriptionAuthPOST/api/upload/singleUpload single image✅POST/api/upload/multipleUpload multiple images✅
-Payments
-MethodEndpointDescriptionAuthPOST/api/payments/initiateInitiate payment✅ TouristPOST/api/payments/successPayment callback❌POST/api/payments/failPayment callback❌
-🔐 Authentication
-The API uses JWT (JSON Web Tokens) for authentication.
-Include token in requests:
-Authorization: Bearer YOUR_JWT_TOKEN
-Token is returned on:
+Server will run on: `http://localhost:5000`
 
-Registration: /api/auth/register
-Login: /api/auth/login
+## 📚 API Documentation
 
-🗄️ Database Schema
-prismaUser (id, email, password, name, role, profilePic, bio, languages, expertise, dailyRate)
-Listing (id, title, description, tourFee, duration, city, category, images, guideId)
-Booking (id, bookingDate, status, totalAmount, touristId, guideId, listingId)
-Review (id, rating, comment, touristId, listingId, bookingId)
-🧪 Testing
-Using Postman
+### Base URL
+```
+Development: http://localhost:5000/api
+Production: https://your-backend.onrender.com/api
+```
 
-Import the Postman collection (if provided)
-Set base URL: http://localhost:5000/api
-Register/Login to get JWT token
-Add token to Authorization header
+### Authentication Endpoints
 
-Test Accounts
-Admin:
-Email: admin@localguide.com
-Password: admin123
+#### Register User
+```http
+POST /api/auth/register
+Content-Type: application/json
 
-Guide:
-Email: guide@test.com
-Password: guide123
+{
+  "email": "user@example.com",
+  "password": "password123",
+  "name": "John Doe",
+  "role": "TOURIST" // or "GUIDE", "ADMIN"
+}
+```
 
-Tourist:
-Email: tourist@test.com
-Password: tourist123
-🚀 Deployment
-Railway Deployment
+#### Login
+```http
+POST /api/auth/login
+Content-Type: application/json
 
-Install Railway CLI:
+{
+  "email": "user@example.com",
+  "password": "password123"
+}
+```
 
-bashnpm install -g railway
+### User Endpoints
+```http
+GET    /api/users/:id              # Get user profile
+PATCH  /api/users/:id              # Update profile (Auth)
+GET    /api/users                  # Get all users (Admin)
+DELETE /api/users/:id              # Delete user (Admin)
+```
 
-Login and deploy:
+### Listing Endpoints
+```http
+GET    /api/listings               # Get all listings
+GET    /api/listings/:id           # Get single listing
+POST   /api/listings               # Create listing (Guide)
+PATCH  /api/listings/:id           # Update listing (Guide)
+DELETE /api/listings/:id           # Delete listing (Guide/Admin)
+GET    /api/listings/my/listings   # Get my listings (Guide)
+```
 
-bashrailway login
-railway init
-railway up
+### Booking Endpoints
+```http
+POST   /api/bookings               # Create booking (Tourist)
+GET    /api/bookings/my-bookings   # Get my bookings
+PATCH  /api/bookings/:id           # Update booking status (Guide)
+GET    /api/bookings               # Get all bookings (Admin)
+```
 
-Add environment variables in Railway dashboard
-Add PostgreSQL plugin
-Run migrations:
+### Review Endpoints
+```http
+POST   /api/reviews                # Create review (Tourist)
+GET    /api/reviews/listing/:id    # Get reviews for listing
+PATCH  /api/reviews/:id            # Update review (Tourist)
+DELETE /api/reviews/:id            # Delete review (Tourist/Admin)
+```
 
-bashrailway run npx prisma migrate deploy
-Render Deployment
+### Upload Endpoints
+```http
+POST   /api/upload/single          # Upload single image
+POST   /api/upload/multiple        # Upload multiple images
+```
 
-Connect GitHub repository
-Select Node.js environment
-Build command: npm install && npx prisma generate
-Start command: npm start
-Add environment variables
-Add PostgreSQL database
+### Payment Endpoints
+```http
+POST   /api/payments/initiate      # Initiate payment (SSLCommerz)
+POST   /api/payments/success       # Payment success callback
+POST   /api/payments/fail          # Payment fail callback
+POST   /api/payments/cancel        # Payment cancel callback
+```
 
-📝 Scripts
-bashnpm run dev          # Start development server
-npm run build        # Build TypeScript
-npm start            # Start production server
-npx prisma studio    # Open Prisma Studio
-npx prisma migrate dev  # Run migrations
-npx prisma generate  # Generate Prisma Client
-🐛 Common Issues
-Issue: Prisma Client not generated
-bashnpx prisma generate
-Issue: Database connection failed
+## 🗄️ Database Schema
 
-Check DATABASE_URL in .env
-Ensure PostgreSQL is running
+### Models
+- **User** - Users with roles (Tourist, Guide, Admin)
+- **Listing** - Tour listings created by guides
+- **Booking** - Tour bookings with status tracking
+- **Review** - Reviews and ratings for tours
 
-Issue: JWT token expired
+### Key Relationships
+```
+User (Guide) → has many → Listings
+User (Tourist) → has many → Bookings
+Booking → belongs to → Listing
+Review → belongs to → Booking (one-to-one)
+```
 
-Token expires after 7 days
-Login again to get new token
+## 🧪 Testing
 
-📧 Contact
-Developer: Your Name
-Email: your.email@example.com
-GitHub: github.com/yourusername
-📄 License
-MIT License - feel free to use for learning purposes.
+### Health Check
+```bash
+curl http://localhost:5000/health
+```
+
+### Test Admin Registration
+```bash
+curl -X POST http://localhost:5000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "admin@localguide.com",
+    "password": "admin123",
+    "name": "Admin User",
+    "role": "ADMIN"
+  }'
+```
+
+## 📁 Project Structure
+```
+backend/
+├── prisma/
+│   ├── schema.prisma          # Database schema
+│   └── migrations/            # Migration files
+├── src/
+│   ├── config/
+│   │   ├── prisma.ts         # Prisma client
+│   │   ├── cloudinary.ts     # Cloudinary config
+│   │   └── multer.ts         # File upload config
+│   ├── modules/
+│   │   ├── user/
+│   │   │   ├── user.model.ts
+│   │   │   ├── user.service.ts
+│   │   │   ├── user.controller.ts
+│   │   │   └── user.routes.ts
+│   │   ├── listing/          # Tour listings
+│   │   ├── booking/          # Booking system
+│   │   ├── review/           # Review system
+│   │   ├── payment/          # Payment integration
+│   │   └── upload/           # File upload
+│   ├── middlewares/
+│   │   ├── auth.middleware.ts
+│   │   └── errorHandler.ts
+│   ├── utils/
+│   │   ├── jwt.ts
+│   │   ├── bcrypt.ts
+│   │   └── response.ts
+│   ├── app.ts                # Express app setup
+│   └── server.ts             # Server entry point
+├── .env.example              # Environment template
+├── package.json
+└── tsconfig.json
+```
+
+## 🚀 Deployment (Render)
+
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed deployment instructions.
+
+Quick steps:
+1. Push code to GitHub
+2. Create new Web Service on Render
+3. Connect GitHub repository
+4. Set environment variables
+5. Deploy!
+
+## 🔐 Default Credentials
+
+### Admin
+- Email: `admin@localguide.com`
+- Password: `admin123`
+
+### Test Tourist
+- Email: `tourist@test.com`
+- Password: `tourist123`
+
+### Test Guide
+- Email: `guide@test.com`
+- Password: `guide123`
+
+## 🐛 Common Issues
+
+### Prisma Client Error
+```bash
+npx prisma generate
+```
+
+### Migration Error
+```bash
+npx prisma migrate reset
+npx prisma migrate dev
+```
+
+### Port Already in Use
+```bash
+# Change PORT in .env or kill process
+lsof -ti:5000 | xargs kill
+```
+
+## 📄 License
+MIT
+
+## 👨‍💻 Author
+**Your Name**
+- GitHub: [@Jamil hossain](https://github.com/yourusername)
+- Email: your.email@example.com
