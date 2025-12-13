@@ -14,6 +14,8 @@ router.patch('/:id', authenticate, UserController.updateProfile);
 
 // Admin only
 router.get('/', authenticate, authorize('ADMIN'), UserController.getAllUsers);
+router.patch('/:id/role', authenticate, authorize('ADMIN'), UserController.updateUserRole); // New route
 router.delete('/:id', authenticate, authorize('ADMIN'), UserController.deleteUser);
+
 
 export default router;

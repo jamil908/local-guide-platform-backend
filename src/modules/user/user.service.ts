@@ -61,6 +61,22 @@ export const updateUserProfile = async (id: string, data: any) => {
   return await UserModel.updateUser(id, data);
 };
 
+
+export const updateUserRoleService = async (id: string, role: UserRole) => {
+  // Validate role
+  const validRoles: UserRole[] = ['TOURIST', 'GUIDE', 'ADMIN'];
+  if (!validRoles.includes(role)) {
+    throw new Error('Invalid role. Must be TOURIST, GUIDE, or ADMIN');
+  }
+
+  const user = await UserModel.findUserById(id);
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  return await UserModel.updateUser(id, { role });
+};
+
 export const getAllUsersService = async () => {
   return await UserModel.getAllUsers();
 };
