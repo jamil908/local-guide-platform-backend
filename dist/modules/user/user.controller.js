@@ -33,7 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteUser = exports.getAllUsers = exports.updateProfile = exports.getProfile = exports.login = exports.register = void 0;
+exports.deleteUser = exports.updateUserRole = exports.getAllUsers = exports.updateProfile = exports.getProfile = exports.login = exports.register = void 0;
 const UserService = __importStar(require("./user.service"));
 const resoponse_1 = require("../../utils/resoponse");
 const register = async (req, res, next) => {
@@ -87,6 +87,24 @@ const getAllUsers = async (req, res, next) => {
     }
 };
 exports.getAllUsers = getAllUsers;
+// New controller for admin to update user role
+const updateUserRole = async (req, res, next) => {
+    try {
+        const { role } = req.body;
+        if (!role) {
+            return res.status(400).json({
+                success: false,
+                message: 'Role is required',
+            });
+        }
+        const user = await UserService.updateUserRoleService(req.params.id, role);
+        res.json((0, resoponse_1.successResponse)(user, 'User role updated successfully'));
+    }
+    catch (error) {
+        next(error);
+    }
+};
+exports.updateUserRole = updateUserRole;
 const deleteUser = async (req, res, next) => {
     try {
         await UserService.deleteUserService(req.params.id);

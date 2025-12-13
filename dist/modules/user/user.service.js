@@ -33,7 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteUserService = exports.getAllUsersService = exports.updateUserProfile = exports.getUserProfile = exports.loginUser = exports.registerUser = void 0;
+exports.deleteUserService = exports.getAllUsersService = exports.updateUserRoleService = exports.updateUserProfile = exports.getUserProfile = exports.loginUser = exports.registerUser = void 0;
 const bcrypt_1 = require("../../utils/bcrypt");
 const jwt_1 = require("../../utils/jwt");
 const UserModel = __importStar(require("./user.model"));
@@ -84,6 +84,19 @@ const updateUserProfile = async (id, data) => {
     return await UserModel.updateUser(id, data);
 };
 exports.updateUserProfile = updateUserProfile;
+const updateUserRoleService = async (id, role) => {
+    // Validate role
+    const validRoles = ['TOURIST', 'GUIDE', 'ADMIN'];
+    if (!validRoles.includes(role)) {
+        throw new Error('Invalid role. Must be TOURIST, GUIDE, or ADMIN');
+    }
+    const user = await UserModel.findUserById(id);
+    if (!user) {
+        throw new Error('User not found');
+    }
+    return await UserModel.updateUser(id, { role });
+};
+exports.updateUserRoleService = updateUserRoleService;
 const getAllUsersService = async () => {
     return await UserModel.getAllUsers();
 };
