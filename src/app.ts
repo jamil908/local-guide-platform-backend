@@ -14,7 +14,10 @@ import uploadRoutes from './modules/upload/upload.route';
 const app: Application = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin:   "https://local-guide-frontend-orcin.vercel.app",
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

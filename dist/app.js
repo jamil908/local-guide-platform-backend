@@ -16,11 +16,14 @@ const payment_routes_1 = __importDefault(require("./modules/payment/payment.rout
 const upload_route_1 = __importDefault(require("./modules/upload/upload.route"));
 const app = (0, express_1.default)();
 // Middleware
-app.use((0, cors_1.default)());
+app.use((0, cors_1.default)({
+    origin: "https://local-guide-frontend-orcin.vercel.app",
+    credentials: true
+}));
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
 // Routes
-app.use('/api/auth', user_routes_1.default);
+// app.use('/api/auth', userRoutes);
 app.use('/api/users', user_routes_1.default);
 app.use('/api/listings', listing_routes_1.default);
 app.use('/api/bookings', booking_routes_1.default);
