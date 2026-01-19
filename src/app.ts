@@ -14,8 +14,26 @@ import uploadRoutes from './modules/upload/upload.route';
 const app: Application = express();
 
 // Middleware
+// app.use(cors({
+//   origin:   "https://local-guide-frontend-orcin.vercel.app",
+//   credentials: true
+// }));
+const allowedOrigins = [
+  "https://local-guide-frontend-orcin.vercel.app",
+
+  // "http://localhost:3000"
+];
 app.use(cors({
-  origin:   "https://local-guide-frontend-orcin.vercel.app",
+  origin: function (origin, callback) {
+    // allow requests with no origin (like mobile apps, Postman)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   credentials: true
 }));
 app.use(express.json());
