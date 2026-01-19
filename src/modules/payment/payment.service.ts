@@ -204,9 +204,7 @@
 //   }
 // };
 
-
 // backend/src/modules/payment/payment.service.ts
-// Manual SSLCommerz implementation using direct HTTP requests
 import prisma from '../../config/prisma';
 
 const store_id = process.env.SSLCOMMERZ_STORE_ID!;
