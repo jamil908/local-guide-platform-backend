@@ -182,21 +182,28 @@ exports.refundPayment = exports.handlePaymentCancel = exports.handlePaymentFail 
 //   }
 // };
 // backend/src/modules/payment/payment.service.ts
-const sslcommerz_lts_1 = __importDefault(require("sslcommerz-lts"));
+// Manual SSLCommerz implementation using direct HTTP requests
 const prisma_1 = __importDefault(require("../../config/prisma"));
 const store_id = process.env.SSLCOMMERZ_STORE_ID;
 const store_passwd = process.env.SSLCOMMERZ_STORE_PASSWORD;
 const is_live = process.env.SSLCOMMERZ_IS_LIVE === 'true';
-// SSLCommerz API endpoints
-const SANDBOX_API_V3 = 'https://sandbox.sslcommerz.com/gwprocess/v3/api.php';
-const SANDBOX_API_V4 = 'https://sandbox.sslcommerz.com/gwprocess/v4/api.php';
+// Use v3 API as specified in your registration email, with v4 as fallback
+const API_URL_V3 = is_live
+    ? 'https://securepay.sslcommerz.com/gwprocess/v3/api.php'
+    : 'https://sandbox.sslcommerz.com/gwprocess/v3/api.php';
+const API_URL_V4 = is_live
+    ? 'https://securepay.sslcommerz.com/gwprocess/v4/api.php'
+    : 'https://sandbox.sslcommerz.com/gwprocess/v4/api.php';
+const VALIDATION_URL = is_live
+    ? 'https://securepay.sslcommerz.com/validator/api/validationserverAPI.php'
+    : 'https://sandbox.sslcommerz.com/validator/api/validationserverAPI.php';
 const initiateSSLCommerzPayment = async (bookingData) => {
     try {
         // Validate environment variables
         if (!store_id || !store_passwd) {
             throw new Error('SSLCommerz credentials not configured');
         }
-        console.log('SSLCommerz Config:', { store_id, is_live });
+        console.log('SSLCommerz Config:', { store_id, is_live, api_url_v3: API_URL_V3, api_url_v4: API_URL_V4 });
         // Get booking details
         const booking = await prisma_1.default.booking.findUnique({
             where: { id: bookingData.bookingId },
@@ -215,81 +222,107 @@ const initiateSSLCommerzPayment = async (bookingData) => {
         }
         // Generate unique transaction ID
         const transactionId = `TXN_${Date.now()}_${bookingData.bookingId.slice(0, 8)}`;
-        // SSLCommerz payment data with ALL required fields properly formatted
-        const data = {
-            total_amount: parseFloat(bookingData.amount.toString()),
+        // Prepare form data for SSLCommerz
+        const formData = new URLSearchParams({
+            store_id: store_id,
+            store_passwd: store_passwd,
+            total_amount: bookingData.amount.toString(),
             currency: 'BDT',
             tran_id: transactionId,
             success_url: `${process.env.BACKEND_URL}/api/payments/success`,
             fail_url: `${process.env.BACKEND_URL}/api/payments/fail`,
             cancel_url: `${process.env.BACKEND_URL}/api/payments/cancel`,
             ipn_url: `${process.env.BACKEND_URL}/api/payments/ipn`,
-            shipping_method: 'NO',
+            // Product info
             product_name: booking.listing.title.substring(0, 50),
             product_category: booking.listing.category,
             product_profile: 'general',
-            // Customer info - REQUIRED fields
+            // Customer info
             cus_name: booking.tourist.name || 'Guest',
             cus_email: booking.tourist.email,
             cus_add1: 'Dhaka',
             cus_city: 'Dhaka',
+            cus_state: 'Dhaka',
             cus_postcode: '1000',
             cus_country: 'Bangladesh',
             cus_phone: '01700000000',
+            cus_fax: '01700000000',
             // Shipping info
             ship_name: booking.tourist.name || 'Guest',
             ship_add1: 'Dhaka',
             ship_city: 'Dhaka',
+            ship_state: 'Dhaka',
             ship_postcode: '1000',
             ship_country: 'Bangladesh',
-            // Additional info
+            shipping_method: 'NO',
+            num_of_item: '1',
+            // Additional data
             value_a: bookingData.bookingId,
             value_b: booking.touristId,
             value_c: booking.guideId,
             value_d: booking.listingId,
-        };
-        console.log('Initiating SSLCommerz payment with data:', {
-            ...data,
-            store_id,
-            is_live,
         });
-        // Initialize SSLCommerz
-        const sslcz = new sslcommerz_lts_1.default(store_id, store_passwd, is_live);
-        // For newly registered sandbox accounts, SSLCommerz uses v3 API
-        // Override the default v4 endpoint if in sandbox mode
-        if (!is_live) {
-            sslcz.sslc_submit_url = SANDBOX_API_V3;
-            console.log('Using SSLCommerz v3 API for sandbox:', SANDBOX_API_V3);
+        console.log('Transaction ID:', transactionId);
+        // Make request to SSLCommerz with timeout and retry logic
+        let response;
+        let responseText = '';
+        let attempts = 0;
+        const maxAttempts = 3;
+        let currentApiUrl = API_URL_V3;
+        while (attempts < maxAttempts) {
+            attempts++;
+            try {
+                console.log(`Attempt ${attempts}/${maxAttempts} to connect to SSLCommerz using ${currentApiUrl}...`);
+                response = await fetch(currentApiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: formData.toString(),
+                    signal: AbortSignal.timeout(30000), // 30 second timeout
+                });
+                responseText = await response.text();
+                console.log('Raw SSLCommerz Response:', responseText.substring(0, 500));
+                // If we got a valid response, break the loop
+                if (responseText && !responseText.includes('Gateway Timeout') && !responseText.includes('504')) {
+                    break;
+                }
+                // If v3 times out on first attempt, try v4
+                if (attempts === 1 && currentApiUrl === API_URL_V3) {
+                    console.log('v3 API timeout, trying v4 API...');
+                    currentApiUrl = API_URL_V4;
+                    continue;
+                }
+                // If it's a timeout, wait before retry
+                if (attempts < maxAttempts) {
+                    console.log('Gateway timeout, retrying in 2 seconds...');
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                }
+            }
+            catch (error) {
+                console.error(`Attempt ${attempts} failed:`, error.message);
+                // Try v4 if v3 fails
+                if (attempts === 1 && currentApiUrl === API_URL_V3) {
+                    console.log('v3 API failed, trying v4 API...');
+                    currentApiUrl = API_URL_V4;
+                    continue;
+                }
+                if (attempts >= maxAttempts) {
+                    throw new Error('SSLCommerz gateway timeout after multiple attempts. The payment gateway may be temporarily unavailable. Please try again in a few minutes.');
+                }
+                await new Promise(resolve => setTimeout(resolve, 2000));
+            }
         }
         let apiResponse;
         try {
-            apiResponse = await sslcz.init(data);
-            console.log('SSLCommerz API Response:', JSON.stringify(apiResponse, null, 2));
+            apiResponse = JSON.parse(responseText);
         }
-        catch (initError) {
-            console.error('SSLCommerz Init Error:', {
-                message: initError.message,
-                type: initError.type,
-                response: initError.response,
-            });
-            // If v3 fails, try v4 as fallback
-            if (initError.type === 'invalid-json' && !is_live) {
-                console.log('Retrying with v4 API...');
-                sslcz.sslc_submit_url = SANDBOX_API_V4;
-                try {
-                    apiResponse = await sslcz.init(data);
-                    console.log('SSLCommerz v4 API Response:', JSON.stringify(apiResponse, null, 2));
-                }
-                catch (v4Error) {
-                    console.error('Both v3 and v4 failed');
-                    throw new Error('SSLCommerz API error. Please verify your credentials at https://sandbox.sslcommerz.com/manage/');
-                }
-            }
-            else {
-                throw initError;
-            }
+        catch (parseError) {
+            console.error('Failed to parse SSLCommerz response:', responseText.substring(0, 200));
+            throw new Error('SSLCommerz returned invalid response. Please check your credentials.');
         }
-        if (apiResponse?.status === 'SUCCESS') {
+        console.log('Parsed SSLCommerz Response:', apiResponse);
+        if (apiResponse.status === 'SUCCESS') {
             // Save transaction info
             await prisma_1.default.booking.update({
                 where: { id: bookingData.bookingId },
@@ -306,7 +339,7 @@ const initiateSSLCommerzPayment = async (bookingData) => {
         }
         else {
             console.error('Payment initialization failed:', apiResponse);
-            const errorMsg = apiResponse?.failedreason || apiResponse?.status || 'Payment initialization failed';
+            const errorMsg = apiResponse.failedreason || 'Payment initialization failed';
             throw new Error(errorMsg);
         }
     }
@@ -314,20 +347,51 @@ const initiateSSLCommerzPayment = async (bookingData) => {
         console.error('SSLCommerz Error Details:', {
             message: error.message,
             stack: error.stack,
-            response: error.response?.data
         });
         throw new Error(error.message || 'Payment initialization failed');
     }
 };
 exports.initiateSSLCommerzPayment = initiateSSLCommerzPayment;
-const validateSSLCommerzPayment = async (transactionId) => {
+// export const validateSSLCommerzPayment = async (val_id: string) => {
+//   try {
+//     const formData = new URLSearchParams({
+//       val_id: val_id,
+//       store_id: store_id,
+//       store_passwd: store_passwd,
+//       format: 'json',
+//     });
+//     const response = await fetch(VALIDATION_URL, {
+//       method: 'POST',
+//       headers: {
+//         'Content-Type': 'application/x-www-form-urlencoded',
+//       },
+//       body: formData.toString(),
+//     });
+//     const validation = await response.json();
+//     return validation;
+//   } catch (error: any) {
+//     console.error('Validation Error:', error);
+//     throw new Error('Payment validation failed');
+//   }
+// };
+const validateSSLCommerzPayment = async (val_id) => {
     try {
-        const sslcz = new sslcommerz_lts_1.default(store_id, store_passwd, is_live);
-        const validation = await sslcz.validate({ val_id: transactionId });
+        // Construct URL with Query Parameters
+        const params = new URLSearchParams({
+            val_id: val_id,
+            store_id: store_id,
+            store_passwd: store_passwd,
+            format: 'json',
+        });
+        const url = `${VALIDATION_URL}?${params.toString()}`;
+        console.log('Validating payment at:', url);
+        const response = await fetch(url);
+        const validation = await response.json();
+        console.log('Validation API Result:', validation);
         return validation;
     }
     catch (error) {
-        console.error('Validation Error:', error);
+        console.error('Validation API Error:', error.message);
         throw new Error('Payment validation failed');
     }
 };
@@ -421,13 +485,24 @@ const refundPayment = async (bankTransactionId) => {
         if (!bankTransactionId) {
             throw new Error('Bank transaction ID is required for refund');
         }
-        const sslcz = new sslcommerz_lts_1.default(store_id, store_passwd, is_live);
-        const refundData = {
-            bank_tran_id: bankTransactionId,
-            refund_amount: 0, // Full refund
+        const refundUrl = is_live
+            ? 'https://securepay.sslcommerz.com/validator/api/merchantTransIDvalidationAPI.php'
+            : 'https://sandbox.sslcommerz.com/validator/api/merchantTransIDvalidationAPI.php';
+        const formData = new URLSearchParams({
+            refund_amount: '0', // Full refund
             refund_remarks: 'Tour cancellation',
-        };
-        const refundResponse = await sslcz.refund(refundData);
+            bank_tran_id: bankTransactionId,
+            store_id: store_id,
+            store_passwd: store_passwd,
+        });
+        const response = await fetch(refundUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: formData.toString(),
+        });
+        const refundResponse = await response.json();
         return {
             success: true,
             refundResponse,

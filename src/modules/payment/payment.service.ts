@@ -204,17 +204,24 @@
 //   }
 // };
 
+
+
 // backend/src/modules/payment/payment.service.ts
+// Manual SSLCommerz implementation using direct HTTP requests
 import prisma from '../../config/prisma';
 
 const store_id = process.env.SSLCOMMERZ_STORE_ID!;
 const store_passwd = process.env.SSLCOMMERZ_STORE_PASSWORD!;
 const is_live = process.env.SSLCOMMERZ_IS_LIVE === 'true';
 
-// Use v3 API as specified in your registration email
-const API_URL = is_live 
+// Use v3 API as specified in your registration email, with v4 as fallback
+const API_URL_V3 = is_live 
   ? 'https://securepay.sslcommerz.com/gwprocess/v3/api.php'
   : 'https://sandbox.sslcommerz.com/gwprocess/v3/api.php';
+
+const API_URL_V4 = is_live 
+  ? 'https://securepay.sslcommerz.com/gwprocess/v4/api.php'
+  : 'https://sandbox.sslcommerz.com/gwprocess/v4/api.php';
 
 const VALIDATION_URL = is_live
   ? 'https://securepay.sslcommerz.com/validator/api/validationserverAPI.php'
@@ -231,7 +238,7 @@ export const initiateSSLCommerzPayment = async (bookingData: {
       throw new Error('SSLCommerz credentials not configured');
     }
 
-    console.log('SSLCommerz Config:', { store_id, is_live, api_url: API_URL });
+    console.log('SSLCommerz Config:', { store_id, is_live, api_url_v3: API_URL_V3, api_url_v4: API_URL_V4 });
 
     // Get booking details
     const booking = await prisma.booking.findUnique({
@@ -301,20 +308,65 @@ export const initiateSSLCommerzPayment = async (bookingData: {
       value_d: booking.listingId,
     });
 
-    console.log('Sending request to SSLCommerz:', API_URL);
     console.log('Transaction ID:', transactionId);
 
-    // Make request to SSLCommerz
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: formData.toString(),
-    });
+    // Make request to SSLCommerz with timeout and retry logic
+    let response;
+    let responseText = '';
+    let attempts = 0;
+    const maxAttempts = 3;
+    let currentApiUrl = API_URL_V3;
 
-    const responseText = await response.text();
-    console.log('Raw SSLCommerz Response:', responseText.substring(0, 500));
+    while (attempts < maxAttempts) {
+      attempts++;
+      try {
+        console.log(`Attempt ${attempts}/${maxAttempts} to connect to SSLCommerz using ${currentApiUrl}...`);
+        
+        response = await fetch(currentApiUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: formData.toString(),
+          signal: AbortSignal.timeout(30000), // 30 second timeout
+        });
+
+        responseText = await response.text();
+        console.log('Raw SSLCommerz Response:', responseText.substring(0, 500));
+
+        // If we got a valid response, break the loop
+        if (responseText && !responseText.includes('Gateway Timeout') && !responseText.includes('504')) {
+          break;
+        }
+
+        // If v3 times out on first attempt, try v4
+        if (attempts === 1 && currentApiUrl === API_URL_V3) {
+          console.log('v3 API timeout, trying v4 API...');
+          currentApiUrl = API_URL_V4;
+          continue;
+        }
+
+        // If it's a timeout, wait before retry
+        if (attempts < maxAttempts) {
+          console.log('Gateway timeout, retrying in 2 seconds...');
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+      } catch (error: any) {
+        console.error(`Attempt ${attempts} failed:`, error.message);
+        
+        // Try v4 if v3 fails
+        if (attempts === 1 && currentApiUrl === API_URL_V3) {
+          console.log('v3 API failed, trying v4 API...');
+          currentApiUrl = API_URL_V4;
+          continue;
+        }
+        
+        if (attempts >= maxAttempts) {
+          throw new Error('SSLCommerz gateway timeout after multiple attempts. The payment gateway may be temporarily unavailable. Please try again in a few minutes.');
+        }
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+    }
 
     let apiResponse;
     try {
@@ -355,31 +407,55 @@ export const initiateSSLCommerzPayment = async (bookingData: {
   }
 };
 
+// export const validateSSLCommerzPayment = async (val_id: string) => {
+//   try {
+//     const formData = new URLSearchParams({
+//       val_id: val_id,
+//       store_id: store_id,
+//       store_passwd: store_passwd,
+//       format: 'json',
+//     });
+
+//     const response = await fetch(VALIDATION_URL, {
+//       method: 'POST',
+//       headers: {
+//         'Content-Type': 'application/x-www-form-urlencoded',
+//       },
+//       body: formData.toString(),
+//     });
+
+//     const validation = await response.json();
+//     return validation;
+//   } catch (error: any) {
+//     console.error('Validation Error:', error);
+//     throw new Error('Payment validation failed');
+//   }
+// };
+
 export const validateSSLCommerzPayment = async (val_id: string) => {
   try {
-    const formData = new URLSearchParams({
+    // Construct URL with Query Parameters
+    const params = new URLSearchParams({
       val_id: val_id,
       store_id: store_id,
       store_passwd: store_passwd,
       format: 'json',
     });
 
-    const response = await fetch(VALIDATION_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: formData.toString(),
-    });
+    const url = `${VALIDATION_URL}?${params.toString()}`;
+    
+    console.log('Validating payment at:', url);
 
+    const response = await fetch(url);
     const validation = await response.json();
+    
+    console.log('Validation API Result:', validation);
     return validation;
   } catch (error: any) {
-    console.error('Validation Error:', error);
+    console.error('Validation API Error:', error.message);
     throw new Error('Payment validation failed');
   }
 };
-
 export const handlePaymentSuccess = async (paymentData: any) => {
   try {
     const { tran_id, val_id, amount, card_type, store_amount, bank_tran_id } = paymentData;

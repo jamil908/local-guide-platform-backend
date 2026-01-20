@@ -25,25 +25,58 @@ export const initiatePayment = async (
   }
 };
 
+// export const paymentSuccess = async (
+//   req: Request,
+//   res: Response,
+//   next: NextFunction
+// ) => {
+//   try {
+//     const paymentData = req.body;
+//     const result = await PaymentService.handlePaymentSuccess(paymentData);
+
+//     // Redirect to frontend success page
+//     res.redirect(
+//       `${process.env.FRONTEND_URL}/payment/success?bookingId=${result.bookingId}&transactionId=${result.transactionId}`
+//     );
+//   } catch (error: any) {
+//     console.error('Payment Success Error:', error);
+//     res.redirect(`${process.env.FRONTEND_URL}/payment/failed`);
+//   }
+// };
+
+
 export const paymentSuccess = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
+    // DEBUG: See what SSLCommerz is actually sending
+    console.log('--- SSLCommerz Success Callback Received ---');
+    console.log('Body:', req.body); 
+
     const paymentData = req.body;
+    
+    // Check if body is empty (common issue with body-parsers)
+    if (!paymentData || Object.keys(paymentData).length === 0) {
+        throw new Error("Empty request body received from SSLCommerz");
+    }
+
     const result = await PaymentService.handlePaymentSuccess(paymentData);
 
-    // Redirect to frontend success page
+    console.log('Payment Handled Successfully, Redirecting...');
     res.redirect(
       `${process.env.FRONTEND_URL}/payment/success?bookingId=${result.bookingId}&transactionId=${result.transactionId}`
     );
   } catch (error: any) {
-    console.error('Payment Success Error:', error);
+    console.error('--- Payment Success Crash Log ---');
+    console.error('Error Message:', error.message);
+    console.error('Stack Trace:', error.stack);
+    
+    // Redirect to failure so the user isn't stuck on a white screen
     res.redirect(`${process.env.FRONTEND_URL}/payment/failed`);
   }
 };
-
 export const paymentFail = async (
   req: Request,
   res: Response,

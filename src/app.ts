@@ -3,7 +3,38 @@ import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import { errorHandler } from './middlewares/errorHandler';
 
-// Import Routes
+const app: Application = express();
+const allowedOrigins = [
+  "https://local-guide-frontend-orcin.vercel.app",
+
+      // 'http://localhost:3000',
+];
+
+
+app.use(cors({
+  origin: function (origin, callback) {
+    // 1. Allow requests with no origin (like Postman or mobile apps)
+    // 2. Allow the literal string 'null' (standard for gateway redirects)
+    if (!origin || origin === 'null') {
+      return callback(null, true);
+    }
+
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      // It's better to log which origin failed for debugging
+      console.error(`Blocked by CORS: ${origin}`);
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
+}));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Routes
+// app.use('/api/auth', userRoutes);
+
 import userRoutes from './modules/user/user.routes';
 import listingRoutes from './modules/listing/listing.routes';
 import bookingRoutes from './modules/booking/booking.routes';
@@ -11,36 +42,6 @@ import reviewRoutes from './modules/review/review.routes';
 import paymentRoutes from './modules/payment/payment.routes';
 import uploadRoutes from './modules/upload/upload.route';
 
-const app: Application = express();
-
-// Middleware
-// app.use(cors({
-//   origin:   "https://local-guide-frontend-orcin.vercel.app",
-//   credentials: true
-// }));
-const allowedOrigins = [
-  "https://local-guide-frontend-orcin.vercel.app",
-
-  // "http://localhost:3000"
-];
-app.use(cors({
-  origin: function (origin, callback) {
-    // allow requests with no origin (like mobile apps, Postman)
-    if (!origin) return callback(null, true);
-
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  credentials: true
-}));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// Routes
-// app.use('/api/auth', userRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/listings', listingRoutes);
 app.use('/api/bookings', bookingRoutes);
