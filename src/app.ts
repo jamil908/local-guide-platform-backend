@@ -6,30 +6,45 @@ import { errorHandler } from './middlewares/errorHandler';
 const app: Application = express();
 const allowedOrigins = [
   "https://local-guide-frontend-orcin.vercel.app",
+  "https://sandbox.sslcommerz.com", // Add this for Sandbox
+  "https://securepay.sslcommerz.com", // Add this for Live
 
       // 'http://localhost:3000',
 ];
 import paymentRoutes from './modules/payment/payment.routes';
 
+// localy kaz kore 
+// app.use(cors({
+//   origin: function (origin, callback) {
+//     // 1. Allow requests with no origin (like Postman or mobile apps)
+//     // 2. Allow the literal string 'null' (standard for gateway redirects)
+//     if (!origin || origin === 'null') {
+//       return callback(null, true);
+//     }
+
+//     if (allowedOrigins.includes(origin)) {
+//       callback(null, true);
+//     } else {
+//       // It's better to log which origin failed for debugging
+//       console.error(`Blocked by CORS: ${origin}`);
+//       callback(new Error("Not allowed by CORS"));
+//     }
+//   },
+//   credentials: true,
+// }));
+
 
 app.use(cors({
-  origin: function (origin, callback) {
-    // 1. Allow requests with no origin (like Postman or mobile apps)
-    // 2. Allow the literal string 'null' (standard for gateway redirects)
-    if (!origin || origin === 'null') {
-      return callback(null, true);
-    }
-
-    if (allowedOrigins.includes(origin)) {
+  origin: (origin, callback) => {
+    if (!origin || origin === 'null' || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      // It's better to log which origin failed for debugging
-      console.error(`Blocked by CORS: ${origin}`);
       callback(new Error("Not allowed by CORS"));
     }
   },
-  credentials: true,
+  credentials: true
 }));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

@@ -12,6 +12,7 @@ const allowedOrigins = [
     "https://local-guide-frontend-orcin.vercel.app",
     // 'http://localhost:3000',
 ];
+const payment_routes_1 = __importDefault(require("./modules/payment/payment.routes"));
 app.use((0, cors_1.default)({
     origin: function (origin, callback) {
         // 1. Allow requests with no origin (like Postman or mobile apps)
@@ -38,7 +39,6 @@ const user_routes_1 = __importDefault(require("./modules/user/user.routes"));
 const listing_routes_1 = __importDefault(require("./modules/listing/listing.routes"));
 const booking_routes_1 = __importDefault(require("./modules/booking/booking.routes"));
 const review_routes_1 = __importDefault(require("./modules/review/review.routes"));
-const payment_routes_1 = __importDefault(require("./modules/payment/payment.routes"));
 const upload_route_1 = __importDefault(require("./modules/upload/upload.route"));
 app.use('/api/users', user_routes_1.default);
 app.use('/api/listings', listing_routes_1.default);
