@@ -9,6 +9,7 @@ const allowedOrigins = [
 
       // 'http://localhost:3000',
 ];
+import paymentRoutes from './modules/payment/payment.routes';
 
 
 app.use(cors({
@@ -39,7 +40,6 @@ import userRoutes from './modules/user/user.routes';
 import listingRoutes from './modules/listing/listing.routes';
 import bookingRoutes from './modules/booking/booking.routes';
 import reviewRoutes from './modules/review/review.routes';
-import paymentRoutes from './modules/payment/payment.routes';
 import uploadRoutes from './modules/upload/upload.route';
 
 app.use('/api/users', userRoutes);
