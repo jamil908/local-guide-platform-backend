@@ -23,6 +23,7 @@ export const uploadToCloudinary = async (
           resolve(result!.secure_url);
         }
       }
+    
     );
 
     // Convert buffer to stream and pipe to Cloudinary

@@ -26,5 +26,10 @@ router.get(
   authorize('ADMIN'),
   BookingController.getAllBookings
 );
-
+router.patch(
+  '/:id/cancel',
+  authenticate,
+  authorize('TOURIST'),
+  BookingController.cancelBooking
+);
 export default router;

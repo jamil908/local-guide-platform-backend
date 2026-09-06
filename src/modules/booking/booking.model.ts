@@ -100,6 +100,17 @@ export const getAllBookings = async () => {
   });
 };
 
+
+export const cancelBooking = async (id: string) => {
+  return await prisma.booking.update({
+    where: { id },
+    data: {
+      status: 'CANCELLED',
+    },
+  });
+};
+
+
 export const updatePaymentStatus = async (
   id: string,
   paymentStatus: string,

@@ -33,8 +33,9 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updatePaymentStatusService = exports.getAllBookingsService = exports.getBookingsByGuideService = exports.getBookingsByTouristService = exports.updateBookingStatusService = exports.getBookingByIdService = exports.createBookingService = void 0;
+exports.updatePaymentStatusService = exports.cancelBookingService = exports.getAllBookingsService = exports.getBookingsByGuideService = exports.getBookingsByTouristService = exports.updateBookingStatusService = exports.getBookingByIdService = exports.createBookingService = void 0;
 const BookingModel = __importStar(require("./booking.model"));
+const client_1 = require("@prisma/client");
 const createBookingService = async (bookingData) => {
     return await BookingModel.createBooking(bookingData);
 };
@@ -63,6 +64,23 @@ const getAllBookingsService = async () => {
     return await BookingModel.getAllBookings();
 };
 exports.getAllBookingsService = getAllBookingsService;
+const cancelBookingService = async (bookingId, touristId) => {
+    const booking = await BookingModel.getBookingById(bookingId);
+    if (!booking) {
+        throw new Error('Booking not found');
+    }
+    if (booking.touristId !== touristId) {
+        throw new Error('You are not authorized to cancel this booking');
+    }
+    if (booking.status === client_1.BookingStatus.CANCELLED) {
+        throw new Error('Booking is already cancelled');
+    }
+    if (booking.status === client_1.BookingStatus.COMPLETED) {
+        throw new Error('Completed booking cannot be cancelled');
+    }
+    return await BookingModel.cancelBooking(bookingId);
+};
+exports.cancelBookingService = cancelBookingService;
 const updatePaymentStatusService = async (id, paymentStatus, transactionId) => {
     return await BookingModel.updatePaymentStatus(id, paymentStatus, transactionId);
 };

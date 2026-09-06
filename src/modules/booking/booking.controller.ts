@@ -66,3 +66,25 @@ export const getAllBookings = async (
     next(error);
   }
 };
+
+export const cancelBooking = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const booking = await BookingService.cancelBookingService(
+      req.params.id,
+      req.user.id
+    );
+
+    res.json(
+      successResponse(
+        booking,
+        'Booking cancelled successfully'
+      )
+    );
+  } catch (error: any) {
+    next(error);
+  }
+};

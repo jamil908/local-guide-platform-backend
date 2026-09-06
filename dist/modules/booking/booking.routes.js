@@ -41,4 +41,5 @@ router.post('/', auth_middleware_1.authenticate, (0, auth_middleware_1.authorize
 router.get('/my-bookings', auth_middleware_1.authenticate, BookingController.getMyBookings);
 router.patch('/:id', auth_middleware_1.authenticate, (0, auth_middleware_1.authorize)('GUIDE'), BookingController.updateBookingStatus);
 router.get('/', auth_middleware_1.authenticate, (0, auth_middleware_1.authorize)('ADMIN'), BookingController.getAllBookings);
+router.patch('/:id/cancel', auth_middleware_1.authenticate, (0, auth_middleware_1.authorize)('TOURIST'), BookingController.cancelBooking);
 exports.default = router;

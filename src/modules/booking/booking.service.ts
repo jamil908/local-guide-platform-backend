@@ -32,6 +32,33 @@ export const getAllBookingsService = async () => {
   return await BookingModel.getAllBookings();
 };
 
+
+export const cancelBookingService = async (
+  bookingId: string,
+  touristId: string
+) => {
+  const booking = await BookingModel.getBookingById(bookingId);
+
+  if (!booking) {
+    throw new Error('Booking not found');
+  }
+
+  if (booking.touristId !== touristId) {
+    throw new Error('You are not authorized to cancel this booking');
+  }
+
+  if (booking.status === BookingStatus.CANCELLED) {
+    throw new Error('Booking is already cancelled');
+  }
+
+  if (booking.status === BookingStatus.COMPLETED) {
+    throw new Error('Completed booking cannot be cancelled');
+  }
+
+  return await BookingModel.cancelBooking(bookingId);
+};
+
+
 export const updatePaymentStatusService = async (
   id: string,
   paymentStatus: string,

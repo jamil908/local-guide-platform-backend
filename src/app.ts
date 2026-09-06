@@ -9,7 +9,7 @@ const allowedOrigins = [
   "https://sandbox.sslcommerz.com", // Add this for Sandbox
   "https://securepay.sslcommerz.com", // Add this for Live
 
-      // 'http://localhost:3000',
+      'http://localhost:3000',
 ];
 import paymentRoutes from './modules/payment/payment.routes';
 

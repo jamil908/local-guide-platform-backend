@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updatePaymentStatus = exports.getAllBookings = exports.getBookingsByGuide = exports.getBookingsByTourist = exports.updateBookingStatus = exports.getBookingById = exports.createBooking = void 0;
+exports.updatePaymentStatus = exports.cancelBooking = exports.getAllBookings = exports.getBookingsByGuide = exports.getBookingsByTourist = exports.updateBookingStatus = exports.getBookingById = exports.createBooking = void 0;
 const prisma_1 = __importDefault(require("../../config/prisma"));
 const createBooking = async (bookingData) => {
     return await prisma_1.default.booking.create({
@@ -101,6 +101,15 @@ const getAllBookings = async () => {
     });
 };
 exports.getAllBookings = getAllBookings;
+const cancelBooking = async (id) => {
+    return await prisma_1.default.booking.update({
+        where: { id },
+        data: {
+            status: 'CANCELLED',
+        },
+    });
+};
+exports.cancelBooking = cancelBooking;
 const updatePaymentStatus = async (id, paymentStatus, transactionId) => {
     return await prisma_1.default.booking.update({
         where: { id },

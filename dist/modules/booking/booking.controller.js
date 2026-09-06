@@ -33,7 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getAllBookings = exports.updateBookingStatus = exports.getMyBookings = exports.createBooking = void 0;
+exports.cancelBooking = exports.getAllBookings = exports.updateBookingStatus = exports.getMyBookings = exports.createBooking = void 0;
 const BookingService = __importStar(require("./booking.service"));
 const resoponse_1 = require("../../utils/resoponse");
 const createBooking = async (req, res, next) => {
@@ -82,3 +82,13 @@ const getAllBookings = async (req, res, next) => {
     }
 };
 exports.getAllBookings = getAllBookings;
+const cancelBooking = async (req, res, next) => {
+    try {
+        const booking = await BookingService.cancelBookingService(req.params.id, req.user.id);
+        res.json((0, resoponse_1.successResponse)(booking, 'Booking cancelled successfully'));
+    }
+    catch (error) {
+        next(error);
+    }
+};
+exports.cancelBooking = cancelBooking;
