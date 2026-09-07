@@ -1,33 +1,63 @@
-// backend/src/config/multer.ts
-import multer from 'multer';
-import path from 'path';
+// import multer, { FileFilterCallback } from 'multer';
+// import { Request } from 'express';
+// import path from 'path';
 
-// Configure storage
-const storage = multer.memoryStorage(); // Store files in memory for Cloudinary upload
+// // Store files in memory so we can pass the buffer to Cloudinary
+// const storage = multer.memoryStorage();
 
-// File filter
-const fileFilter = (req: any, file: any, cb: any) => {
-  // Allowed file types
-  const allowedTypes = /jpeg|jpg|png|gif|webp/;
-  const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-  const mimetype = allowedTypes.test(file.mimetype);
+// // Only allow image files
+// const fileFilter = (
+//   req: Request,
+//   file: Express.Multer.File,
+//   cb: FileFilterCallback
+// ) => {
+//   const allowedMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+//   const allowedExtensions = /\.(jpeg|jpg|png|gif|webp)$/i;
 
-  if (extname && mimetype) {
+//   if (allowedMimeTypes.includes(file.mimetype) && allowedExtensions.test(file.originalname)) {
+//     cb(null, true);
+//   } else {
+//     cb(new Error('Only image files are allowed (jpeg, jpg, png, gif, webp)'));
+//   }
+// };
+
+// export const upload = multer({
+//   storage,
+//   limits: {
+//     fileSize: 5 * 1024 * 1024, // 5MB
+//   },
+//   fileFilter,
+// });
+
+// export const uploadSingle = upload.single('image');
+// export const uploadMultiple = upload.array('images', 10);
+
+
+
+import multer, { FileFilterCallback } from 'multer';
+import { Request } from 'express';
+
+const storage = multer.memoryStorage();
+
+const fileFilter = (
+  req: Request,
+  file: Express.Multer.File,
+  cb: FileFilterCallback
+) => {
+  const allowedMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+  
+  if (allowedMimeTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new Error('Only image files are allowed (jpeg, jpg, png, gif, webp)'));
+    cb(new Error('Only image files are allowed!'));
   }
 };
 
-// Multer upload configuration
 export const upload = multer({
-  storage: storage,
-  limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB max file size
-  },
-  fileFilter: fileFilter,
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  fileFilter,
 });
 
-// Multiple file upload configuration
-export const uploadMultiple = upload.array('images', 10); // Max 10 images
 export const uploadSingle = upload.single('image');
+export const uploadMultiple = upload.array('images', 10);

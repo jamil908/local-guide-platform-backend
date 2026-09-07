@@ -1,7 +1,5 @@
-// backend/src/modules/upload/upload.controller.ts
 import { Request, Response, NextFunction } from 'express';
 import { uploadToCloudinary, uploadMultipleToCloudinary } from './upload.service';
-import { successResponse } from '../../utils/resoponse';
 
 export const uploadSingleImage = async (
   req: Request,
@@ -12,16 +10,19 @@ export const uploadSingleImage = async (
     if (!req.file) {
       return res.status(400).json({
         success: false,
-        message: 'No file uploaded',
+        message: 'No image file uploaded',
       });
     }
 
     const imageUrl = await uploadToCloudinary(req.file);
 
-    res.status(200).json(
-      successResponse({ url: imageUrl }, 'Image uploaded successfully')
-    );
+    return res.status(200).json({
+      success: true,
+      message: 'Image uploaded successfully!',
+      data: { url: imageUrl },
+    });
   } catch (error: any) {
+    console.error('🔥 Controller Exception Log:', error);
     next(error);
   }
 };
@@ -35,15 +36,17 @@ export const uploadMultipleImages = async (
     if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
       return res.status(400).json({
         success: false,
-        message: 'No files uploaded',
+        message: 'No image files uploaded',
       });
     }
 
     const imageUrls = await uploadMultipleToCloudinary(req.files);
 
-    res.status(200).json(
-      successResponse({ urls: imageUrls }, 'Images uploaded successfully')
-    );
+    return res.status(200).json({
+      success: true,
+      message: 'Images uploaded successfully!',
+      data: { urls: imageUrls },
+    });
   } catch (error: any) {
     next(error);
   }
